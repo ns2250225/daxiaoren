@@ -250,6 +250,81 @@ spr.slipper = makeSprite(SLIPPER_ROWS, SLIPPER_PAL);
 spr.gsword = makeSprite(giantSwordRows(), GSWORD_PAL);
 spr.gswordGlow = tint(spr.gsword, '#ffcf4a');
 
+// 小人外观：默认纸人，或上传的照片纸牌（w/h 为世界像素尺寸）
+const villainLook = { normal: spr.villain, hurt: spr.villainHurt, white: spr.villainWhite, w: 32, h: spr.villain.height * 2, photo: false };
+function useDefaultLook() {
+  Object.assign(villainLook, { normal: spr.villain, hurt: spr.villainHurt, white: spr.villainWhite, w: 32, h: spr.villain.height * 2, photo: false });
+}
+
+const PHOTO_W = 32, PHOTO_H = 44;
+// 把任意图片裁成 3:4 竖幅、缩到 32x44 并做色阶量化，得到像素风照片
+function pixelatePhoto(img) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  const ar = PHOTO_W / PHOTO_H;
+  let cw = iw, ch = iw / ar;
+  if (ch > ih) { ch = ih; cw = ih * ar; }
+  const sx = (iw - cw) / 2, sy = (ih - ch) * 0.3;   // 偏上裁剪，尽量保住脸
+  // 逐级减半缩小，避免一步缩太狠出现锯齿噪点
+  let cur = document.createElement('canvas');
+  cur.width = Math.max(PHOTO_W, Math.round(cw)); cur.height = Math.max(PHOTO_H, Math.round(ch));
+  cur.getContext('2d').drawImage(img, sx, sy, cw, ch, 0, 0, cur.width, cur.height);
+  while (cur.width / 2 >= PHOTO_W * 2) {
+    const n = document.createElement('canvas');
+    n.width = Math.round(cur.width / 2); n.height = Math.round(cur.height / 2);
+    const nx = n.getContext('2d');
+    nx.imageSmoothingQuality = 'high';
+    nx.drawImage(cur, 0, 0, n.width, n.height);
+    cur = n;
+  }
+  const out = document.createElement('canvas');
+  out.width = PHOTO_W; out.height = PHOTO_H;
+  const x = out.getContext('2d');
+  x.imageSmoothingQuality = 'high';
+  x.drawImage(cur, 0, 0, PHOTO_W, PHOTO_H);
+  const d = x.getImageData(0, 0, PHOTO_W, PHOTO_H);
+  for (let i = 0; i < d.data.length; i += 4) {
+    for (let k = 0; k < 3; k++) {
+      const v = (d.data[i + k] - 128) * 1.12 + 128;          // 略增对比
+      d.data[i + k] = clamp(Math.round(v / 20) * 20, 0, 255); // 色阶量化
+    }
+    d.data[i + 3] = 255;
+  }
+  x.putImageData(d, 0, 0);
+  return out;
+}
+
+// 把照片贴成一张立在地上的纸牌
+function makePhotoCard(photo, tintColor, tintA) {
+  const c = document.createElement('canvas');
+  c.width = PHOTO_W + 4; c.height = PHOTO_H + 8;
+  const x = c.getContext('2d');
+  x.fillStyle = '#2a1a10'; x.fillRect(0, 0, c.width, PHOTO_H + 6);
+  x.fillStyle = '#efe3c6'; x.fillRect(1, 1, c.width - 2, PHOTO_H + 4);
+  x.fillStyle = '#c9b58e'; x.fillRect(1, PHOTO_H + 3, c.width - 2, 2); x.fillRect(c.width - 3, 1, 2, PHOTO_H + 4);
+  x.drawImage(photo, 2, 2);
+  // 顶部红色封条
+  x.fillStyle = '#2a1a10'; x.fillRect(13, 0, 10, 5);
+  x.fillStyle = '#c8282a'; x.fillRect(14, 0, 8, 4);
+  x.fillStyle = '#f2c230'; x.fillRect(17, 1, 2, 2);
+  // 底座支脚
+  x.fillStyle = '#2a1a10'; x.fillRect(7, PHOTO_H + 6, 4, 2); x.fillRect(c.width - 11, PHOTO_H + 6, 4, 2);
+  if (tintColor) {
+    x.globalCompositeOperation = 'source-atop';
+    x.globalAlpha = tintA;
+    x.fillStyle = tintColor;
+    x.fillRect(0, 0, c.width, c.height);
+  }
+  return c;
+}
+
+function usePhotoLook(photo) {
+  const normal = makePhotoCard(photo);
+  Object.assign(villainLook, {
+    normal, hurt: makePhotoCard(photo, '#ff2020', 0.38), white: tint(normal, '#ffffff'),
+    w: normal.width, h: normal.height, photo: true,
+  });
+}
+
 // ======================================================================
 //  背景（预渲染）
 // ======================================================================
@@ -1570,6 +1645,59 @@ try { const saved = localStorage.getItem('dxr-name'); if (saved) nameInput.value
 setName(nameInput.value);
 nameInput.addEventListener('input', () => setName(nameInput.value));
 
+// ---------- 上传照片替换小人 ----------
+const photoInput = $('photoInput'), photoClear = $('photoClear');
+function photoSwapFx() {
+  sfx.poof();
+  burst(VX, GROUND - 26, 30, { speed: [20, 90], life: [0.5, 1], ramp: R.smoke, size: [3, 5], drag: 2, add: false, jitter: 10 });
+  burst(VX, GROUND - 26, 20, { speed: [40, 140], life: [0.3, 0.6], ramp: R.magic, drag: 3 });
+}
+function applyPhoto(photo, announce) {
+  usePhotoLook(photo);
+  photoClear.hidden = false;
+  if (announce) {
+    photoSwapFx();
+    villain.say(pick(['你……你怎么有我照片！', '别拿我照片打啊！', '这谁拍的！？']), 1.6);
+  }
+}
+function clearPhoto() {
+  useDefaultLook();
+  photoClear.hidden = true;
+  try { localStorage.removeItem('dxr-photo'); } catch (err) { /* 忽略 */ }
+  photoSwapFx();
+  villain.say('我又变回纸人了！', 1.4);
+}
+photoInput.addEventListener('change', () => {
+  const file = photoInput.files && photoInput.files[0];
+  photoInput.value = '';
+  if (!file) return;
+  Snd.init();
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const photo = pixelatePhoto(img);
+    applyPhoto(photo, true);
+    try { localStorage.setItem('dxr-photo', photo.toDataURL('image/png')); } catch (err) { /* 存储满了就不保存 */ }
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); villain.say('这照片打不开……', 1.4); };
+  img.src = url;
+});
+photoClear.addEventListener('click', () => { clearPhoto(); photoClear.blur(); });
+try {
+  const saved = localStorage.getItem('dxr-photo');
+  if (saved) {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = PHOTO_W; c.height = PHOTO_H;
+      c.getContext('2d').drawImage(img, 0, 0, PHOTO_W, PHOTO_H);
+      applyPhoto(c, false);
+    };
+    img.src = saved;
+  }
+} catch (err) { /* 忽略 */ }
+
 // ======================================================================
 //  更新
 // ======================================================================
@@ -1755,13 +1883,14 @@ function drawVillain(t) {
   if (v.state === 'dead' && v.stateT > 1.5) alpha = Math.max(0, 1 - (v.stateT - 1.5) / 0.5);
   const breathe = v.state === 'alive' && v.hurtT <= 0 ? (Math.sin(t * 4) > 0 ? 1 : 0.96) : 1;
   const sy = v.squash * breathe, sx = 1 + (1 - v.squash) * 0.9;
-  const s = v.flash > 0 ? spr.villainWhite : (v.hurtT > 0 || v.state !== 'alive' ? spr.villainHurt : spr.villain);
+  const L = villainLook;
+  const s = v.flash > 0 ? L.white : (v.hurtT > 0 || v.state !== 'alive' ? L.hurt : L.normal);
   g.save();
   g.globalAlpha = alpha;
   g.translate(Math.round(x), Math.round(y));
   g.rotate(v.rot);
   g.scale(sx * sc, sy * sc);
-  g.drawImage(s, -16, -s.height * 2, 32, s.height * 2);
+  g.drawImage(s, -L.w / 2, -L.h, L.w, L.h);
   g.restore();
 }
 
@@ -1837,7 +1966,7 @@ function strokeText(txt, x, y, fill, stroke, lw) {
 function drawNameTag() {
   const v = villain;
   if (v.state === 'dead') return;
-  const p = toScreen(VX + v.ox, GROUND - 54 + v.oy);
+  const p = toScreen(VX + v.ox, GROUND - villainLook.h - 8 + v.oy);
   const fs = Math.round(22 * Math.sqrt(cam.zoom) * uiScale);
   sctx.font = `900 ${fs}px ${FONT}`;
   sctx.textAlign = 'center';
@@ -1855,7 +1984,7 @@ function drawNameTag() {
 function drawSpeech() {
   const sp = villain.speech;
   if (!sp) return;
-  const p = toScreen(VX + villain.ox - 14, GROUND - 60 + villain.oy);
+  const p = toScreen(VX + villain.ox - 14, GROUND - villainLook.h - 14 + villain.oy);
   const pop = sp.t < 0.1 ? easeOut(sp.t / 0.1) : 1;
   sctx.save();
   sctx.font = `900 26px ${FONT}`;

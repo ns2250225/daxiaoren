@@ -132,13 +132,32 @@ body.ready #energyFill {
   outline: none;
 }
 #nameInput:focus { border-color: #ffd24a; }
-#muteBtn {
+.hudBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: .3cqw;
+  font: inherit;
   font-size: 1.1cqw;
+  line-height: 1.2;
   background: #1a1024;
   border: .18cqw solid #6a4ab8;
+  border-radius: 0;
   color: #fff;
   cursor: pointer;
   padding: .15cqw .45cqw;
+  white-space: nowrap;
+}
+.hudBtn span { font-size: .95cqw; color: #ffe9a8; font-weight: 700; }
+.hudBtn[hidden] { display: none; }
+#photoBtn { border-color: #c8282a; }
+#photoBtn:hover, .hudBtn:hover { filter: brightness(1.3); }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 /* ---------- 连击 ---------- */
@@ -288,8 +307,9 @@ body.cinema #tip, body.cinema #combo { opacity: 0; }
   .panel .label, .panel .stat { font-size: 2.9vw; margin-top: 1vw; }
   .bar { height: 3.2vw; margin-top: 1.2vw; border-width: 2px; }
   #ultHint { font-size: 3vw; margin-top: 1vw; }
-  #nameInput { width: 34vw; border-width: 2px; padding: 1vw 2vw; font-size: 16px; }
-  #muteBtn { font-size: 4.4vw; border-width: 2px; padding: .6vw 2vw; }
+  #nameInput { width: 30vw; border-width: 2px; padding: 1vw 2vw; font-size: 16px; }
+  .hudBtn { font-size: 4.2vw; border-width: 2px; padding: .6vw 1.8vw; gap: 1vw; }
+  .hudBtn span { font-size: 3.4vw; }
 
   #skillbar {
     position: static;
@@ -367,15 +387,17 @@ body.cinema #tip, body.cinema #combo { opacity: 0; }
   }
   .panel.left { grid-area: p; width: auto; }
   .panel.right { grid-area: v; width: auto; }
-  .panel.center { grid-area: name; gap: 5px; }
-  .panel.center label { display: none; }
+  .panel.center { grid-area: name; gap: 5px; flex-wrap: wrap; }
+  .panel.center label:not(.hudBtn) { display: none; }
   .panel .title { font-size: clamp(11px, 3.4vh, 16px); letter-spacing: 0; text-shadow: 1px 1px 0 #000; }
   .panel .label { display: none; }
   .panel .stat { font-size: clamp(9px, 2.7vh, 12px); margin-top: 3px; }
   .bar { height: clamp(7px, 2.4vh, 12px); margin-top: 4px; border-width: 2px; }
   #ultHint { font-size: clamp(9px, 2.7vh, 12px); margin-top: 3px; }
-  #nameInput { flex: 1; width: auto; border-width: 2px; padding: 3px 5px; font-size: 16px; }
-  #muteBtn { font-size: 16px; border-width: 2px; padding: 2px 5px; }
+  #nameInput { flex: 1 1 100%; width: auto; border-width: 2px; padding: 3px 5px; font-size: 16px; }
+  .hudBtn { font-size: 15px; border-width: 2px; padding: 2px 5px; gap: 3px; }
+  .hudBtn span { font-size: 12px; }
+  #photoBtn { flex: 1; justify-content: center; }
 
   .group { display: grid; gap: 6px; align-self: end; }
   .group.ults { grid-area: ults; grid-template-columns: 1fr; }

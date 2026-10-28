@@ -33,7 +33,9 @@
     <div class="panel center">
       <label for="nameInput">小人名字</label>
       <input id="nameInput" maxlength="10" value="小人" autocomplete="off" spellcheck="false" enterkeyhint="done">
-      <button id="muteBtn" title="静音 (M)">🔊</button>
+      <label id="photoBtn" class="hudBtn" title="上传照片替换小人">📷<span>照片</span><input id="photoInput" class="visually-hidden" type="file" accept="image/*"></label>
+      <button id="photoClear" class="hudBtn" title="恢复默认小人" hidden>↺</button>
+      <button id="muteBtn" class="hudBtn" title="静音 (M)">🔊</button>
     </div>
 
     <div class="panel right">
