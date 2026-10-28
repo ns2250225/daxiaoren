@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07040f">
+<title>像素打小人</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="combo"><span id="comboNum">0</span><small>连击</small></div>
+    <div id="tip">
+      <span class="tip-desk">按住按键可连发 · 多键可同时按 · M 静音</span>
+      <span class="tip-touch">按住按钮可连发 · 可多指同时按</span>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div class="panel left">
+      <div class="title">驱邪师</div>
+      <div class="label">奥义能量</div>
+      <div class="bar energy"><div id="energyFill"></div></div>
+      <div id="ultHint"><span class="tip-desk">奥义就绪！空格 / Q / E 释放</span><span class="tip-touch">奥义就绪！</span></div>
+      <div class="stat">累计伤害 <span id="totalDmg">0</span></div>
+    </div>
+
+    <div class="panel center">
+      <label for="nameInput">小人名字</label>
+      <input id="nameInput" maxlength="10" value="小人" autocomplete="off" spellcheck="false" enterkeyhint="done">
+      <button id="muteBtn" title="静音 (M)">🔊</button>
+    </div>
+
+    <div class="panel right">
+      <div class="title"><span id="vName">小人</span><span id="koCount">KO ×0</span></div>
+      <div class="bar hp"><div id="hpGhost"></div><div id="hpFill"></div></div>
+      <div class="stat"><span id="hpText">8000 / 8000</span></div>
+    </div>
+  </div>
+
+  <div id="skillbar">
+    <div class="group skills">
+      <button class="skill" data-skill="slash" style="--c:#4ad2ff"><b>J</b><span>风刃斩</span></button>
+      <button class="skill" data-skill="gun" style="--c:#ffd84a"><b>K</b><span>速射枪</span></button>
+      <button class="skill" data-skill="fire" style="--c:#ff7a2a"><b>L</b><span>爆炎球</span></button>
+      <button class="skill" data-skill="thunder" style="--c:#9ab8ff"><b>U</b><span>九天落雷</span></button>
+      <button class="skill" data-skill="ice" style="--c:#9ef0ff"><b>I</b><span>冰棘突刺</span></button>
+      <button class="skill" data-skill="slipper" style="--c:#ff7aa0"><b>O</b><span>拖鞋神功</span></button>
+    </div>
+    <div class="group ults">
+      <button class="skill ult" data-skill="ult-thunder" style="--c:#ffd24a"><i class="ultFill"></i><b>空格</b><span>千雷万剑</span></button>
+      <button class="skill ult" data-skill="ult-meteor" style="--c:#ff7a2a"><i class="ultFill"></i><b>Q</b><span>陨星天降</span></button>
+      <button class="skill ult" data-skill="ult-void" style="--c:#c060ff"><i class="ultFill"></i><b>E</b><span>虚空湮灭</span></button>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
